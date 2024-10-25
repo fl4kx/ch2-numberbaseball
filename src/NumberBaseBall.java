@@ -79,6 +79,7 @@ public class NumberBaseBall {
                     getGameHistory();
                     break;
                 case 3:
+                    clearGameHistory();
                     System.out.println("게임을 종료합니다.");
                     break;
                 default:
