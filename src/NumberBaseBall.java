@@ -265,6 +265,3 @@ public class NumberBaseBall {
         gameHistory.clear();
     }
 }
-
-
->>>>>>> develop
