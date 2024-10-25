@@ -2,7 +2,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IllegalFormatCodePointException;
 import java.util.InputMismatchException;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -25,6 +24,21 @@ public class NumberBaseBall {
      * 유저가 입력한 답의 점수판
      */
     private final Map<String, Integer> scoreBoard = new HashMap<>();
+
+    /**
+     * 한 게임에서 입력한 횟수
+     */
+    private int countRound;
+
+    /**
+     * 플레이한 게임 수
+     */
+    private int playTime = 0;
+
+    /**
+     * 게임 클리어 히스토리
+     */
+    private final Map<Integer, Integer> gameHistory = new HashMap<>();
 
     /**
      * {@code scoreBoard}를 초기화하는 메서드입니다.
@@ -61,6 +75,8 @@ public class NumberBaseBall {
                     gameStart();
                     break;
                 case 2:
+                    System.out.println(" < 게임 기록 보기 >");
+                    getGameHistory();
                     break;
                 case 3:
                     System.out.println("게임을 종료합니다.");
@@ -82,6 +98,7 @@ public class NumberBaseBall {
      * 점수판의 {@code strike}가 3점이 되면 게임이 종료됩니다.
      */
     private void gameStart() {
+        increasePlayTime();
         numberGenerator();
 
         do {
@@ -98,6 +115,9 @@ public class NumberBaseBall {
         } while (scoreBoard.get("strike") != 3);
 
         System.out.println("정답 : " + numberOfAnswer + "\nYou Win\n");
+        setGameHistory(playTime, countRound);
+
+        initRound();
     }
 
     /**
@@ -130,7 +150,6 @@ public class NumberBaseBall {
         numberOfUser.clear();
     }
 
-
     /**
      * 사용자로부터 숫자를 입력을 받고 분석 가능한 형태로 변환후 {@code numberOfUser}에 저장하고 {@code true}를 반환합니다.
      * 정상적인 값이 아닐 경우 {@link InputMismatchException} 예외를 발생시켜
@@ -158,6 +177,7 @@ public class NumberBaseBall {
             }
 
             Collections.reverse(numberOfUser);
+            increaseRound();
             return true;
 
         } catch (InputMismatchException e) {
@@ -166,7 +186,6 @@ public class NumberBaseBall {
 
         }
     }
-
 
     /**
      * {@code numberOfAnswer}와 {@code numberOfUser}의 요소를 비교해
@@ -192,6 +211,57 @@ public class NumberBaseBall {
         }
         return String.format("\u001B[34m" + "S : " + scoreBoard.get("strike") + "  " + "\u001B[33m" + " B : " + scoreBoard.get("ball") + "  " + "\u001B[31m " + "OUT : " + scoreBoard.get("out") + "\u001B[0m");
 
+    }
+
+    /**
+     * {@code countRound}를 1 증가시키는 메서드입니다.
+     */
+    private void increaseRound() {
+        countRound++;
+    }
+
+    /**
+     * 카운트한 라운드 횟수를 초기화하는 메서드입니다.
+     */
+    private void initRound() {
+        countRound = 0;
+    }
+
+    /**
+     * 게임 플레이 횟수를 1 증가시키는 메서드입니다.
+     */
+    private void increasePlayTime() {
+        playTime++;
+    }
+
+    /**
+     * 플레이 회차와 해당 회차에 시도한 라운드 횟수를 게임 히스토리에 저장하는 메서드입니다.
+     *
+     * @param playTime 플레이 회차
+     * @param countTry 시도한 라운드 횟수
+     */
+    private void setGameHistory(int playTime, int countTry) {
+        gameHistory.put(playTime, countTry);
+    }
+
+    /**
+     * 저장된 게임 히스토리를 전부 출력하는 메서드입니다.
+     */
+    private void getGameHistory() {
+        if (!gameHistory.isEmpty()) {
+            for (int i = 1; i <= gameHistory.size(); i++) {
+                System.out.println(i + "번째 게임 : 시도 횟수 - " + gameHistory.get(i));
+            }
+        } else {
+            System.out.println("--- 기록이 없습니다 ---\n");
+        }
+    }
+
+    /**
+     * 저장된 게임 히스토리를 전부 제거하는 메서드입니다.
+     */
+    private void clearGameHistory() {
+        gameHistory.clear();
     }
 }
 
