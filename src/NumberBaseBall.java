@@ -1,6 +1,9 @@
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IllegalFormatCodePointException;
+import java.util.InputMismatchException;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -19,12 +22,12 @@ public class NumberBaseBall {
      */
     private final List<Integer> numberOfUser = new ArrayList<>();
     /**
-     * 유저가 입력한 답의 점수판 입니다.
+     * 유저가 입력한 답의 점수판
      */
     private final Map<String, Integer> scoreBoard = new HashMap<>();
 
     /**
-     * {@code scoreBoard}를 초기화하는 메서드 입니다.
+     * {@code scoreBoard}를 초기화하는 메서드입니다.
      */
     private void initScoreBoard() {
         scoreBoard.put("strike", 0);
@@ -32,8 +35,69 @@ public class NumberBaseBall {
         scoreBoard.put("out", 3);
     }
 
-    public void controller() {
+    /**
+     * 숫자야구 게임의 메인 메뉴입니다.
+     * 1. 게임을 시작
+     * 2. 기록을 출력
+     * 3. 게임을 종료
+     * 유저가 만족할 때까지 즐길 수 있습니다.
+     */
+    public void gameController() {
+        Scanner sc = new Scanner(System.in);
 
+        int selectMenu;
+
+        do {
+            System.out.println("환영합니다! 원하시는 번호를 입력해주세요");
+            System.out.print("1. 게임 시작하기" + "  ");
+            System.out.print("2. 게임 기록 보기" + "  ");
+            System.out.println("3. 종료하기");
+
+            selectMenu = sc.nextInt();
+
+            switch (selectMenu) {
+                case 1:
+                    System.out.println("< 게임을 시작합니다 >");
+                    gameStart();
+                    break;
+                case 2:
+                    break;
+                case 3:
+                    System.out.println("게임을 종료합니다.");
+                    break;
+                default:
+                    System.out.println("올바른 번호를 입력해주세요.");
+            }
+
+        } while (selectMenu != 3);
+
+    }
+
+    /**
+     * 숫자야구 게임의 로직입니다. <br>
+     * {@code numberGenerator()}를 호출해 임의의 숫자를 생성,
+     * {@code initScoreBoard()} 점수판을 초기화합니다.
+     * {@code getUserInput()}으로 사용자 입력을 받아
+     * {@code answerComparator()}으로 정답을 체크합니다.
+     * 점수판의 {@code strike}가 3점이 되면 게임이 종료됩니다.
+     */
+    private void gameStart() {
+        numberGenerator();
+
+        do {
+            initScoreBoard();
+            System.out.println("숫자를 입력해 주세요!");
+
+            if (!getUserInput()) {
+                System.out.println("올바르지 않은 입력값입니다.");
+            } else {
+                String result = answerComparator();
+                System.out.println(result);
+            }
+
+        } while (scoreBoard.get("strike") != 3);
+
+        System.out.println("정답 : " + numberOfAnswer + "\nYou Win\n");
     }
 
     /**
@@ -51,36 +115,84 @@ public class NumberBaseBall {
     }
 
     /**
-     * 사용자로부터 숫자를 입력을 받고 분석 가능한 형태로 가공해 {@code numberOfUser}에 저장합니다.
+     * {@code numberOfUser}에 숫자를 추가하는 메서드입니다.
+     *
+     * @param num 유저가 입력한 숫자
      */
-    private void getUserInput() {
-        Scanner sc = new Scanner(System.in);
-        int userInput = sc.nextInt();
-
-        while (userInput > 0) {
-            numberOfUser.add(userInput % 10);
-            userInput /= 10;
-        }
-        Collections.reverse(numberOfUser);
+    private void addNumberOfUser(int num) {
+        numberOfUser.add(num);
     }
 
     /**
-     * {@code numberOfAnswer}와 {@code numberOfUser}의 요소를 비교해 {@code scoreBoard}에 결과를 기록합니다.
-     *
-     * @return {@code scoreBoard}를 반영한 문자열을 반환합니다.
+     * {@code numberOfUser}의 요소를 전부 제거하는 메서드입니다.
      */
-    private String answerComparator() {
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                if (numberOfAnswer.get(i).equals(numberOfUser.get(j)) && i == j) {
-                    scoreBoard.merge("strike", 1, Integer::sum);
-                } else if (numberOfAnswer.get(i).equals(numberOfUser.get(j))) {
-                    scoreBoard.merge("ball", 1, Integer::sum);
-                }
-            }
-        }
-        scoreBoard.merge("out", scoreBoard.get("strike") + scoreBoard.get("ball"), Integer::sum);
-        return String.format("\u001B[34m" + "S : " + scoreBoard.get("strike") + "  " + "\u001B[33m" + " B : " + scoreBoard.get("ball") + "  " + "\u001B[31m " + "OUT : " + scoreBoard.get("out"));
+    private void clearNumberOfUser() {
+        numberOfUser.clear();
     }
 
+
+    /**
+     * 사용자로부터 숫자를 입력을 받고 분석 가능한 형태로 변환후 {@code numberOfUser}에 저장하고 {@code true}를 반환합니다.
+     * 정상적인 값이 아닐 경우 {@link InputMismatchException} 예외를 발생시켜
+     * {@code numberOfUser}를 비운 다음 {@code false}를 반환합니다.
+     *
+     * @return 문자열 유효성 검사 결과 {@code true} or {@code false}
+     */
+    private boolean getUserInput() throws InputMismatchException {
+        Scanner sc = new Scanner(System.in);
+
+        try {
+            int userInput = sc.nextInt();
+
+            while (userInput > 0) {
+                addNumberOfUser(userInput % 10);
+                userInput /= 10;
+            }
+
+            Set<Integer> checkException = new HashSet<>(numberOfUser);
+
+            if (numberOfUser.size() != 3 || checkException.size() != 3) {
+                throw new InputMismatchException();
+            } else {
+                checkException.clear();
+            }
+
+            Collections.reverse(numberOfUser);
+            return true;
+
+        } catch (InputMismatchException e) {
+            clearNumberOfUser();
+            return false;
+
+        }
+    }
+
+
+    /**
+     * {@code numberOfAnswer}와 {@code numberOfUser}의 요소를 비교해
+     * {@code scoreBoard}에 결과를 기록하고 힌트를 반환합니다.
+     * 비교가 끝나면 {@code numberOfUser}를 비웁니다
+     *
+     * @return 힌트를 포함한 문자열
+     */
+    private String answerComparator() {
+        if (!numberOfAnswer.isEmpty()) {
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    if (numberOfAnswer.get(i).equals(numberOfUser.get(j)) && i == j) {
+                        scoreBoard.merge("strike", 1, Integer::sum);
+                    } else if (numberOfAnswer.get(i).equals(numberOfUser.get(j))) {
+                        scoreBoard.merge("ball", 1, Integer::sum);
+                    }
+                }
+            }
+
+            clearNumberOfUser();
+            scoreBoard.put("out", scoreBoard.get("out") - (scoreBoard.get("strike") + scoreBoard.get("ball")));
+        }
+        return String.format("\u001B[34m" + "S : " + scoreBoard.get("strike") + "  " + "\u001B[33m" + " B : " + scoreBoard.get("ball") + "  " + "\u001B[31m " + "OUT : " + scoreBoard.get("out") + "\u001B[0m");
+
+    }
 }
+
+
